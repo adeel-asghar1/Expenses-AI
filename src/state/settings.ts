@@ -3,6 +3,10 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
+import { normalizeApiUrl, apiUrlProblem } from '../lib/url'
+
+export { normalizeApiUrl, apiUrlProblem } from '../lib/url'
+
 const DEFAULT_API_URL = (process.env.EXPO_PUBLIC_API_URL || 'http://10.168.226.205:8000').replace(/\/+$/, '')
 
 export type SoundKind = 'save' | 'notify' | 'error' | 'tap'
@@ -31,24 +35,6 @@ type SettingsState = {
   setAnimationsEnabled: (v: boolean) => void
   setNotificationsEnabled: (v: boolean) => void
   setSound: (kind: SoundKind, v: boolean) => void
-}
-
-export const normalizeApiUrl = (url: string): string => url.trim().replace(/\/+$/, '')
-
-/** Guard rails so nobody can paste "localhost" and brick the phone build. */
-export const apiUrlProblem = (url: string): string | null => {
-  const clean = normalizeApiUrl(url)
-  if (!clean) return 'Enter the laptop server address.'
-  if (!/^https?:\/\//i.test(clean)) return 'Start with http:// (or https://). Example: http://10.168.226.205:8000'
-  try {
-    const host = new URL(clean).hostname
-    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-      return "A phone can't reach 'localhost' — that means this phone itself. Use the laptop's LAN IP, e.g. http://10.168.226.205:8000"
-    }
-  } catch {
-    return 'That address does not look valid. Example: http://10.168.226.205:8000'
-  }
-  return null
 }
 
 export const useSettings = create<SettingsState>()(
